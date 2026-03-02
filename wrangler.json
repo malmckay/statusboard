@@ -1,0 +1,16 @@
+{
+	"compatibility_date": "2025-10-08",
+	"main": "src/index.ts",
+	"name": "statusboard",
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "b0661328-922f-41cd-87f2-15fd6aa51741",
+			"database_name": "d1-statusboard-database"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}
