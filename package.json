@@ -27,5 +27,9 @@
 		"dev": "pnpm seedLocalD1 && wrangler dev",
 		"predeploy": "wrangler d1 migrations apply DB --remote",
 		"seedLocalD1": "wrangler d1 migrations apply DB --local"
+	},
+	"dependencies": {
+		"@resvg/resvg-wasm": "^2.6.2",
+		"satori": "^0.21.0"
 	}
 }

@@ -12,5 +12,13 @@
 	],
 	"observability": {
 		"enabled": true
+	},
+	"rules": [
+		{ "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true },
+		{ "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": true }
+	],
+	"vars": {
+		"WEATHER_API_KEY": "2aad8e905e3d461dbe755432262302",
+		"WEATHER_CITY": "Portland,ME"
 	}
 }
