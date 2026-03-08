@@ -6,9 +6,9 @@ export default {
 		const url = new URL(request.url);
 
 		if (url.pathname === '/daily-image') {
-			// Cache the generated image for 30 minutes
+			// Cache the generated image for 30 minutes (canonical key strips query params)
 			const cache = caches.default;
-			const cacheKey = new Request(request.url, { method: 'GET' });
+			const cacheKey = new Request(`${url.origin}/daily-image`, { method: 'GET' });
 			const cached = await cache.match(cacheKey);
 			if (cached) return cached;
 
