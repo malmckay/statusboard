@@ -1,59 +1,76 @@
-# Worker + D1 Database
+# statusboard
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/d1-template)
-
-![Worker + D1 Template Preview](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/cb7cb0a9-6102-4822-633c-b76b7bb25900/public)
-
-<!-- dash-content-start -->
-
-D1 is Cloudflare's native serverless SQL database ([docs](https://developers.cloudflare.com/d1/)). This project demonstrates using a Worker with a D1 binding to execute a SQL statement. A simple frontend displays the result of this query:
-
-```SQL
-SELECT * FROM comments LIMIT 3;
-```
-
-The D1 database is initialized with a `comments` table and this data:
-
-```SQL
-INSERT INTO comments (author, content)
-VALUES
-    ('Kristian', 'Congrats!'),
-    ('Serena', 'Great job!'),
-    ('Max', 'Keep up the good work!')
-;
-```
-
-> [!IMPORTANT]
-> When using C3 to create this project, select "no" when it asks if you want to deploy. You need to follow this project's [setup steps](https://github.com/cloudflare/templates/tree/main/d1-template#setup-steps) before deploying.
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+Cloudflare Worker + Inkplate 5 V2 e-ink display. The worker generates a 1280×720 PNG every 30 minutes with today's weather and a joke of the day. The device fetches it every 4 hours and overlays the current time, refreshing the clock every minute.
 
 ```
-npm create cloudflare@latest -- --template=cloudflare/templates/d1-template
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│                        3:45 PM                              │
+│                   Sunday, Mar 8                             │
+│                                                             │
+├──────────────────────────┬──────────────────────────────────┤
+│ TODAY                    │ JOKE OF THE DAY                  │
+│                          │                                  │
+│ Partly Cloudy            │ Why don't scientists trust       │
+│ High 48°F · Low 31°F     │ atoms? Because they make up      │
+│ Portland, ME             │ everything.                      │
+└──────────────────────────┴──────────────────────────────────┘
 ```
 
-A live public deployment of this template is available at [https://d1-template.templates.workers.dev](https://d1-template.templates.workers.dev)
+## Structure
 
-## Setup Steps
+```
+statusboard/
+├── src/                  # Cloudflare Worker source
+│   ├── index.ts          # Fetch handler + routing
+│   ├── dailyImage.ts     # PNG generation (satori → resvg)
+│   ├── weather.ts        # WeatherAPI.com client
+│   ├── joke.ts           # icanhazdadjoke.com client
+│   └── fonts/            # Bundled Inter .ttf files
+├── migrations/           # D1 SQL migrations
+├── inkplate/             # Arduino sketch (Soldered Inkplate 5 V2)
+│   ├── Inkplate5V2_News.ino
+│   ├── src/Network.h/.cpp
+│   └── Fonts/Inter16pt7b.h
+├── wrangler.json
+└── Justfile
+```
 
-1. Install the project dependencies with a package manager of your choice:
-   ```bash
-   npm install
-   ```
-2. Create a [D1 database](https://developers.cloudflare.com/d1/get-started/) with the name "d1-template-database":
-   ```bash
-   npx wrangler d1 create d1-template-database
-   ```
-   ...and update the `database_id` field in `wrangler.json` with the new database ID.
-3. Run the following db migration to initialize the database (notice the `migrations` directory in this project):
-   ```bash
-   npx wrangler d1 migrations apply --remote d1-template-database
-   ```
-4. Deploy the project!
-   ```bash
-   npx wrangler deploy
-   ```
+## Worker
+
+**Endpoint:** `GET /daily-image` — returns a 1280×720 grayscale PNG, cached 30 min.
+
+**Layout:** top 280px blank (device draws the clock there), below: weather left / joke right.
+
+**Config** (in `wrangler.json` vars):
+| Var | Value |
+|-----|-------|
+| `WEATHER_API_KEY` | WeatherAPI.com key |
+| `WEATHER_CITY` | `Portland,ME` |
+
+```bash
+just dev       # seed local D1 + start dev server
+just deploy    # apply remote migrations + deploy
+just check     # typecheck + dry-run deploy
+```
+
+## Inkplate sketch
+
+**Board:** Soldered Inkplate 5 V2 (`Inkplate_Boards:esp32:Inkplate5V2`)
+
+**Required Arduino libraries** (install via Library Manager):
+- Inkplate (Soldered)
+- ArduinoJson (Benoit Blanchon)
+
+**Configure** at the top of `inkplate/Inkplate5V2_News.ino`:
+```cpp
+const char *WIFI_SSID  = "...";
+const char *WIFI_PASS  = "...";
+const char *WORKER_URL = "https://statusboard.<subdomain>.workers.dev/daily-image";
+```
+
+```bash
+just compile   # compile sketch
+just flash     # compile + upload to connected device
+just flash PORT=/dev/cu.usbserial-XXXX  # override port
+```
