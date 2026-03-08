@@ -4,6 +4,7 @@ import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 import interRegular from './fonts/Inter-Regular.ttf';
 import interBold from './fonts/Inter-Bold.ttf';
+import weatherIconsFont from './fonts/weathericons-regular-webfont.ttf';
 import { fetchWeather, type ConditionCode } from './weather';
 import { fetchJoke } from './joke';
 import { fetchCalendar } from './calendar';
@@ -35,160 +36,34 @@ async function ensureWasm() {
 	}
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Weather icons (Weather Icons font) ───────────────────────────────────────
+// Codepoints from https://erikflowers.github.io/weather-icons/
 
-// Leaf div — always needs display:'flex' to satisfy satori 0.21 validation.
-function shape(style: Record<string, any>) {
-	return { type: 'div', props: { style: { display: 'flex', ...style }, children: [] } };
-}
-
-// ── Weather icons (satori nodes) ─────────────────────────────────────────────
-// All icons are drawn in a roughly 80×80 px space.
-
-function iconSun() {
-	const cx = 40, cy = 40, r = 18, rays = 8, rayLen = 12, rayGap = 24;
-	const rayNodes = Array.from({ length: rays }, (_, i) => {
-		const angle = (i * 360) / rays;
-		const rad = (angle * Math.PI) / 180;
-		const x1 = cx + Math.cos(rad) * rayGap;
-		const y1 = cy + Math.sin(rad) * rayGap;
-		const x2 = cx + Math.cos(rad) * (rayGap + rayLen);
-		const y2 = cy + Math.sin(rad) * (rayGap + rayLen);
-		return shape({ position: 'absolute', left: x1, top: y1, width: Math.abs(x2-x1) || 2, height: Math.abs(y2-y1) || 2, background: 'black' });
-	});
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: cx-r, top: cy-r, width: r*2, height: r*2, borderRadius: r, background: 'black' }),
-				...rayNodes,
-			],
-		},
-	};
-}
-
-function iconCloud() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 10, top: 30, width: 50, height: 22, borderRadius: 11, background: 'black' }),
-				shape({ position: 'absolute', left: 18, top: 22, width: 26, height: 26, borderRadius: 13, background: 'black' }),
-				shape({ position: 'absolute', left: 32, top: 24, width: 22, height: 22, borderRadius: 11, background: 'black' }),
-			],
-		},
-	};
-}
-
-function iconPartlyCloud() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 4,  top: 8,  width: 28, height: 28, borderRadius: 14, background: 'black' }),
-				shape({ position: 'absolute', left: 14, top: 36, width: 52, height: 20, borderRadius: 10, background: 'black' }),
-				shape({ position: 'absolute', left: 22, top: 28, width: 24, height: 24, borderRadius: 12, background: 'black' }),
-				shape({ position: 'absolute', left: 38, top: 30, width: 20, height: 20, borderRadius: 10, background: 'black' }),
-			],
-		},
-	};
-}
-
-function iconRain() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 8,  top: 8,  width: 54, height: 20, borderRadius: 10, background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 4,  width: 22, height: 22, borderRadius: 11, background: 'black' }),
-				shape({ position: 'absolute', left: 32, top: 6,  width: 18, height: 18, borderRadius: 9,  background: 'black' }),
-				shape({ position: 'absolute', left: 18, top: 36, width: 4,  height: 14, borderRadius: 2,  background: 'black' }),
-				shape({ position: 'absolute', left: 33, top: 40, width: 4,  height: 14, borderRadius: 2,  background: 'black' }),
-				shape({ position: 'absolute', left: 48, top: 36, width: 4,  height: 14, borderRadius: 2,  background: 'black' }),
-			],
-		},
-	};
-}
-
-function iconSnow() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 8,  top: 8,  width: 54, height: 20, borderRadius: 10, background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 4,  width: 22, height: 22, borderRadius: 11, background: 'black' }),
-				shape({ position: 'absolute', left: 32, top: 6,  width: 18, height: 18, borderRadius: 9,  background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 38, width: 7,  height: 7,  borderRadius: 4,  background: 'black' }),
-				shape({ position: 'absolute', left: 31, top: 42, width: 7,  height: 7,  borderRadius: 4,  background: 'black' }),
-				shape({ position: 'absolute', left: 46, top: 38, width: 7,  height: 7,  borderRadius: 4,  background: 'black' }),
-			],
-		},
-	};
-}
-
-function iconSleet() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 8,  top: 8,  width: 54, height: 20, borderRadius: 10, background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 4,  width: 22, height: 22, borderRadius: 11, background: 'black' }),
-				shape({ position: 'absolute', left: 32, top: 6,  width: 18, height: 18, borderRadius: 9,  background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 37, width: 4,  height: 12, borderRadius: 2,  background: 'black' }),
-				shape({ position: 'absolute', left: 31, top: 41, width: 7,  height: 7,  borderRadius: 4,  background: 'black' }),
-				shape({ position: 'absolute', left: 47, top: 37, width: 4,  height: 12, borderRadius: 2,  background: 'black' }),
-			],
-		},
-	};
-}
-
-function iconThunder() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 8,  top: 4,  width: 54, height: 20, borderRadius: 10, background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 0,  width: 22, height: 22, borderRadius: 11, background: 'black' }),
-				shape({ position: 'absolute', left: 32, top: 2,  width: 18, height: 18, borderRadius: 9,  background: 'black' }),
-				shape({ position: 'absolute', left: 34, top: 28, width: 14, height: 4,  background: 'black', transform: 'rotate(30deg)' }),
-				shape({ position: 'absolute', left: 28, top: 40, width: 14, height: 4,  background: 'black', transform: 'rotate(30deg)' }),
-			],
-		},
-	};
-}
-
-function iconFog() {
-	return {
-		type: 'div',
-		props: {
-			style: { position: 'relative', width: 80, height: 80, display: 'flex' },
-			children: [
-				shape({ position: 'absolute', left: 8,  top: 20, width: 58, height: 7, borderRadius: 4, background: 'black' }),
-				shape({ position: 'absolute', left: 16, top: 36, width: 48, height: 7, borderRadius: 4, background: 'black' }),
-				shape({ position: 'absolute', left: 8,  top: 52, width: 58, height: 7, borderRadius: 4, background: 'black' }),
-			],
-		},
-	};
-}
+const WI_CODEPOINTS: Record<ConditionCode, string> = {
+	'sunny':        '\uf00d', // wi-day-sunny
+	'partly-cloudy': '\uf002', // wi-day-cloudy
+	'cloudy':       '\uf041', // wi-cloud
+	'rain':         '\uf019', // wi-rain
+	'snow':         '\uf01b', // wi-snow
+	'sleet':        '\uf0b5', // wi-sleet
+	'thunder':      '\uf01e', // wi-thunderstorm
+	'fog':          '\uf014', // wi-fog
+};
 
 function weatherIcon(code: ConditionCode) {
-	switch (code) {
-		case 'sunny':        return iconSun();
-		case 'partly-cloudy': return iconPartlyCloud();
-		case 'cloudy':       return iconCloud();
-		case 'rain':         return iconRain();
-		case 'snow':         return iconSnow();
-		case 'sleet':        return iconSleet();
-		case 'thunder':      return iconThunder();
-		case 'fog':          return iconFog();
-	}
+	return {
+		type: 'div',
+		props: {
+			style: {
+				display: 'flex',
+				fontFamily: 'weathericons',
+				fontSize: 80,
+				lineHeight: 1,
+				color: 'black',
+			},
+			children: WI_CODEPOINTS[code],
+		},
+	};
 }
 
 // ── Layout helpers ────────────────────────────────────────────────────────────
@@ -542,6 +417,7 @@ export async function generateDailyImage(env: Env): Promise<Uint8Array> {
 		fonts: [
 			{ name: 'Inter', data: interRegular, weight: 400, style: 'normal' },
 			{ name: 'Inter', data: interBold, weight: 700, style: 'normal' },
+			{ name: 'weathericons', data: weatherIconsFont, weight: 400, style: 'normal' },
 		],
 	});
 
