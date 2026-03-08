@@ -1,8 +1,8 @@
 /*
     Inkplate5V2_News — statusboard display
-    Fetches a pre-rendered 960×540 PNG from the statusboard Cloudflare Worker every 4 hours.
-    The PNG contains today's weather and a joke of the day, with the top 280 px left blank.
-    The device draws the current time in that blank area and refreshes it every minute.
+    Fetches a pre-rendered 1280×720 PNG from the statusboard Cloudflare Worker every 4 hours.
+    The PNG contains date (top-left), calendar, weather, and joke.
+    The top-right quadrant is left blank; the device draws the clock there every minute.
 
     Required libraries (install via Arduino Library Manager):
       - Inkplate (Soldered)
@@ -24,13 +24,13 @@ const char *WIFI_PASS       = "AndKevin";
 // appears in the output. Replace the placeholder below with that URL.
 const char *WORKER_URL = "https://statusboard.mal-mckay.workers.dev/daily-image";
 
-// Layout constant — must match TIME_H in the worker's src/dailyImage.ts
-const int TIME_AREA_H = 280;  // px reserved at the top of the image for the clock
+// Layout constants — must match TIME_H and TIME_MID_X in src/dailyImage.ts
+const int TIME_AREA_H  = 280;  // height of the top strip
+const int TIME_AREA_MX = 640;  // x where the clock half begins (right half is blank in PNG)
 // ------------------------------------
 
 #include "Inkplate.h"
 #include "src/Network.h"
-#include "Fonts/Inter16pt7b.h"
 
 // 4 hours in milliseconds
 #define IMAGE_REFRESH_INTERVAL_MS ((uint32_t)4 * 60 * 60 * 1000)
@@ -100,18 +100,19 @@ time_t localEpoch()
     return nowSec + (time_t)easternOffsetSeconds(nowSec);
 }
 
-// Clears the time area and draws the current time + date.
-// Call after the background image is already in the frame buffer.
+// Clears the clock area (top-right half) and draws the current time.
+// The date is rendered by the worker in the top-left half — do not touch it.
 void drawTimeOverlay()
 {
-    // Clear the reserved area with white
-    inkplate.fillRect(0, 0, inkplate.width(), TIME_AREA_H, WHITE);
+    // Clear only the right half of the top strip
+    int clockW = inkplate.width() - TIME_AREA_MX;
+    inkplate.fillRect(TIME_AREA_MX, 0, clockW, TIME_AREA_H, WHITE);
 
     time_t now = localEpoch();
     struct tm t;
     gmtime_r(&now, &t);
 
-    // ── Large time string ──────────────────────────────────────────────────
+    // ── Large time string, centred in the right half ───────────────────────
     int hour12 = t.tm_hour % 12;
     if (hour12 == 0) hour12 = 12;
     const char *ampm = (t.tm_hour < 12) ? "AM" : "PM";
@@ -120,29 +121,16 @@ void drawTimeOverlay()
 
     int16_t bx, by;
     uint16_t bw, bh;
-    inkplate.setFont(nullptr);       // built-in bitmap font
+    inkplate.setFont(nullptr);
     inkplate.setTextSize(16);
     inkplate.setTextColor(BLACK, WHITE);
     inkplate.getTextBounds(timeStr, 0, 0, &bx, &by, &bw, &bh);
-    // Vertically centre in the upper ~180 px, leaving room for the date below
+    // Centre horizontally in the right half, vertically in the strip
     inkplate.setCursor(
-        (inkplate.width() - (int)bw) / 2 - bx,
-        (160 - (int)bh) / 2 - by
+        TIME_AREA_MX + (clockW - (int)bw) / 2 - bx,
+        (TIME_AREA_H - (int)bh) / 2 - by
     );
     inkplate.print(timeStr);
-
-    // ── Date string ────────────────────────────────────────────────────────
-    static const char *kDay[]   = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-    static const char *kMonth[] = {"Jan","Feb","Mar","Apr","May","Jun",
-                                   "Jul","Aug","Sep","Oct","Nov","Dec"};
-    char dateStr[32];
-    sprintf(dateStr, "%s, %s %d", kDay[t.tm_wday], kMonth[t.tm_mon], t.tm_mday);
-
-    inkplate.setFont(&Inter16pt7b);
-    inkplate.setTextSize(2);
-    inkplate.getTextBounds(dateStr, 0, 0, &bx, &by, &bw, &bh);
-    inkplate.setCursor((inkplate.width() - (int)bw) / 2 - bx, 220);
-    inkplate.print(dateStr);
 }
 
 // Fetches the background PNG from the worker and loads it into the frame buffer.
