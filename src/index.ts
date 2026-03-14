@@ -9,11 +9,13 @@ export default {
 			// Cache the generated image for 30 minutes (canonical key strips query params)
 			const cache = caches.default;
 			const cacheKey = new Request(`${url.origin}/daily-image`, { method: 'GET' });
-			const cached = await cache.match(cacheKey);
-			if (cached) return cached;
+			const cached = url.searchParams.get('bust') !== '1' && await cache.match(cacheKey);
+			// if (cached) return cached;
 
 			try {
-				const png = await generateDailyImage(env);
+				const dateParam = url.searchParams.get('date');
+				const now = dateParam ? new Date(`${dateParam}T12:00:00Z`) : undefined;
+				const png = await generateDailyImage(env, now);
 				const response = new Response(png, {
 					headers: {
 						'Content-Type': 'image/png',
@@ -28,9 +30,7 @@ export default {
 		}
 
 		// Default route: show D1 data
-		const stmt = env.DB.prepare('SELECT * FROM comments LIMIT 3');
-		const { results } = await stmt.all();
-		return new Response(renderHtml(JSON.stringify(results, null, 2)), {
+		return new Response(renderHtml('Hi!'), {
 			headers: { 'content-type': 'text/html' },
 		});
 	},

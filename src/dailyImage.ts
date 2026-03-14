@@ -86,13 +86,13 @@ function divider(vertical: boolean, length: number, thickness = 3) {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export async function generateDailyImage(env: Env): Promise<Uint8Array> {
+export async function generateDailyImage(env: Env, now = new Date()): Promise<Uint8Array> {
 	await ensureWasm();
 
 	const [weather, joke, calendar] = await Promise.all([
 		fetchWeather(env.WEATHER_API_KEY, env.WEATHER_CITY),
 		fetchJoke(),
-		fetchCalendar(env),
+		fetchCalendar(env, now),
 	]);
 
 	const clothingTip = getClothingTip(weather.condition, weather.tempHighF);
@@ -101,7 +101,7 @@ export async function generateDailyImage(env: Env): Promise<Uint8Array> {
 	const kDay   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 	const kMonth = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 	// Use Eastern time (UTC-5 proxy, good enough for date display)
-	const nowEastern = new Date(Date.now() - 5 * 3600 * 1000);
+	const nowEastern = new Date(now.getTime() - 5 * 3600 * 1000);
 	const dayName   = kDay[nowEastern.getUTCDay()];
 	const monthName = kMonth[nowEastern.getUTCMonth()];
 	const dayNum    = nowEastern.getUTCDate();
@@ -223,7 +223,7 @@ export async function generateDailyImage(env: Env): Promise<Uint8Array> {
 														},
 													},
 													// Event list
-													...calendar.events.map(name => ({
+													...calendar.events.map(({ summary, time }) => ({
 														type: 'div',
 														props: {
 															style: {
@@ -252,8 +252,23 @@ export async function generateDailyImage(env: Env): Promise<Uint8Array> {
 																{
 																	type: 'div',
 																	props: {
-																		style: { fontSize: 28, lineHeight: 1.3 },
-																		children: name,
+																		style: { display: 'flex', flexDirection: 'column' },
+																		children: [
+																			{
+																				type: 'div',
+																				props: {
+																					style: { fontSize: 26, lineHeight: 1.3 },
+																					children: summary,
+																				},
+																			},
+																			...(time ? [{
+																				type: 'div',
+																				props: {
+																					style: { fontSize: 20, color: '#555', lineHeight: 1.2 },
+																					children: time,
+																				},
+																			}] : []),
+																		],
 																	},
 																},
 															],
@@ -279,15 +294,15 @@ export async function generateDailyImage(env: Env): Promise<Uint8Array> {
 													{
 														type: 'div',
 														props: {
-															style: { fontSize: 36, fontWeight: 700 },
-															children: `${calendar.countdown.days}`,
+															style: { fontSize: 24, fontWeight: 700 },
+															children: `${calendar.countdown.days} days until`,
 														},
 													},
 													{
 														type: 'div',
 														props: {
-															style: { fontSize: 20, color: '#555', marginTop: 2 },
-															children: `days til ${calendar.countdown.label}`,
+															style: { fontSize: 32, color: '#555', marginTop: 2 },
+															children: `${calendar.countdown.label}`,
 														},
 													},
 												],

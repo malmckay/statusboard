@@ -20,6 +20,7 @@
 	],
 	"vars": {
 		"WEATHER_API_KEY": "2aad8e905e3d461dbe755432262302",
-		"WEATHER_CITY": "Portland,ME"
+		"WEATHER_CITY": "Portland,ME",
+		"ICAL_URL": "https://calendar.google.com/calendar/ical/aoife.c.mckay%40gmail.com/private-a0831dc87d305ce3ac598d00942e9cb3/basic.ics"
 	}
 }
