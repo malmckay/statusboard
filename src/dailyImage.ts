@@ -229,17 +229,17 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 															style: {
 																display: 'flex',
 																flexDirection: 'row',
-																alignItems: 'baseline',
+																alignItems: 'center',
 																marginBottom: 10,
 															},
 															children: [
-																...(time ? [{
+																{
 																	type: 'div',
 																	props: {
-																		style: { fontSize: 18, color: '#555', marginRight: 8, flexShrink: 0 },
-																		children: time,
+																		style: { fontSize: 18, color: '#555', width: 72, flexShrink: 0 },
+																		children: time ?? 'today',
 																	},
-																}] : []),
+																},
 																{
 																	type: 'div',
 																	props: {
@@ -270,7 +270,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 													{
 														type: 'div',
 														props: {
-															style: { fontSize: 24, fontWeight: 700 },
+															style: { fontSize: 36, fontWeight: 700 },
 															children: `${calendar.countdown.days} days until`,
 														},
 													},
@@ -298,7 +298,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 									style: {
 										display: 'flex',
 										flexDirection: 'column',
-										justifyContent: 'center',
+										justifyContent: 'flex-start',
 										alignItems: 'flex-start',
 										width: WEATHER_W,
 										padding: '24px 32px',
@@ -388,14 +388,14 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 										{
 											type: 'div',
 											props: {
-												style: { fontSize: 28, lineHeight: 1.5 },
+												style: { fontSize: 36, lineHeight: 1.5 },
 												children: joke.setup,
 											},
 										},
 										...(joke.delivery ? [{
 											type: 'div',
 											props: {
-												style: { fontSize: 28, fontWeight: 700, lineHeight: 1.5, marginTop: 12 },
+												style: { fontSize: 36, fontWeight: 700, lineHeight: 1.5, marginTop: 12 },
 												children: joke.delivery,
 											},
 										}] : []),

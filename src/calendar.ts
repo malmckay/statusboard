@@ -92,7 +92,7 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 	const comp = new ICAL.Component(ICAL.parse(text));
 	const today = todayEastern(now);
 
-	console.error('[calendar] today =', JSON.stringify(today));
+	// console.error('[calendar] today =', JSON.stringify(today));
 
 	const regularEvents: EventEntry[] = [];
 	let countdownDays = Infinity;
@@ -125,14 +125,14 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 				}
 
 				if (sameDay(e, today)) {
-					console.error('[calendar] recurring match:', summary, JSON.stringify(e));
+					// console.error('[calendar] recurring match:', summary, JSON.stringify(e));
 					regularEvents.push({ summary, isAllDay: e.isDate, hour: e.hour, minute: e.minute });
 					break;
 				}
 			}
 		} else {
 			const e = toEastern(event.startDate);
-			console.error('[calendar] single event:', summary, JSON.stringify(e));
+			// console.error('[calendar] single event:', summary, JSON.stringify(e));
 
 			if (isCountdown && isAfter(e, today)) {
 				const days = daysUntil(e, today);
@@ -151,7 +151,7 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 	const uniqueEvents = regularEvents.filter(e => !seen.has(e.summary) && seen.add(e.summary));
 	uniqueEvents.sort((a, b) => sortKey(a) - sortKey(b));
 
-	console.error('[calendar] result:', JSON.stringify({ uniqueEvents, countdownDays, countdownLabel }));
+	// console.error('[calendar] result:', JSON.stringify({ uniqueEvents, countdownDays, countdownLabel }));
 
 	return {
 		events: uniqueEvents.slice(0, 6).map(e => ({
