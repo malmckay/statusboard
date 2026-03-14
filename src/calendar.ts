@@ -21,20 +21,39 @@ const COUNTDOWN_TAG = '#countdown';
 // 2000 covers ~5.5 years of daily events or ~38 years of weekly events.
 const MAX_ITER = 2000;
 
-// Returns today's { year, month (1-based), day } in Eastern time (UTC-5 proxy).
-function todayEastern(now: Date) {
-	const d = new Date(now.getTime() - 5 * 3600 * 1000);
-	return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
-}
+// Eastern UTC offset in ms (UTC-5 proxy — close enough for date/time display).
+const EASTERN_OFFSET_MS = 5 * 3600 * 1000;
 
 type YMD = { year: number; month: number; day: number };
+type Eastern = YMD & { hour: number; minute: number; isDate: boolean };
 
-// Extract date components from an ICAL.Time.
-// For Google Calendar events with TZID=America/New_York, ical.js stores the
-// LOCAL date in .year/.month/.day — exactly what we want. Avoids toJSDate()
-// which requires a timezone database not available in Workers.
-function icalYMD(t: ICAL.Time): YMD {
-	return { year: t.year, month: t.month, day: t.day };
+// Convert an ICAL.Time to Eastern-local components.
+//   • All-day (isDate=true)          → date components as-is, hour/minute = 0
+//   • UTC-stamped (DTSTART:...Z)     → subtract Eastern offset via toJSDate()
+//   • TZID-local (DTSTART;TZID=...)  → ical.js already stores local time in .year/.month/.day/.hour/.minute
+function toEastern(t: ICAL.Time): Eastern {
+	if (t.isDate) {
+		return { year: t.year, month: t.month, day: t.day, hour: 0, minute: 0, isDate: true };
+	}
+	if (t.zone?.tzid === 'UTC') {
+		const d = new Date(t.toJSDate().getTime() - EASTERN_OFFSET_MS);
+		return {
+			year: d.getUTCFullYear(),
+			month: d.getUTCMonth() + 1,
+			day: d.getUTCDate(),
+			hour: d.getUTCHours(),
+			minute: d.getUTCMinutes(),
+			isDate: false,
+		};
+	}
+	// TZID-local: ical.js stores the wall-clock time directly.
+	return { year: t.year, month: t.month, day: t.day, hour: t.hour, minute: t.minute, isDate: false };
+}
+
+// Returns today's date in Eastern time (UTC-5 proxy).
+function todayEastern(now: Date): YMD {
+	const d = new Date(now.getTime() - EASTERN_OFFSET_MS);
+	return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
 }
 
 function sameDay(a: YMD, b: YMD) {
@@ -62,7 +81,6 @@ function formatTime(hour: number, minute: number): string {
 type EventEntry = { summary: string; isAllDay: boolean; hour: number; minute: number };
 
 function sortKey(e: EventEntry): number {
-	// All-day events sort before timed events; timed events sort by time.
 	return e.isAllDay ? -1 : e.hour * 60 + e.minute;
 }
 
@@ -93,11 +111,11 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 			let limit = MAX_ITER;
 
 			while (limit-- > 0 && (next = iter.next())) {
-				const d = icalYMD(next);
+				const e = toEastern(next);
 
-				if (isAfter(d, today)) {
+				if (isAfter(e, today)) {
 					if (isCountdown) {
-						const days = daysUntil(d, today);
+						const days = daysUntil(e, today);
 						if (days > 0 && days < countdownDays) {
 							countdownDays = days;
 							countdownLabel = summary.replace(/#countdown/gi, '').trim();
@@ -106,26 +124,25 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 					break;
 				}
 
-				if (sameDay(d, today)) {
-					console.error('[calendar] recurring match:', summary, JSON.stringify(d));
-					regularEvents.push({ summary, isAllDay: next.isDate, hour: next.hour, minute: next.minute });
+				if (sameDay(e, today)) {
+					console.error('[calendar] recurring match:', summary, JSON.stringify(e));
+					regularEvents.push({ summary, isAllDay: e.isDate, hour: e.hour, minute: e.minute });
 					break;
 				}
 			}
 		} else {
-			const start = event.startDate;
-			const d = icalYMD(start);
-			console.error('[calendar] single event:', summary, JSON.stringify(d));
+			const e = toEastern(event.startDate);
+			console.error('[calendar] single event:', summary, JSON.stringify(e));
 
-			if (isCountdown && isAfter(d, today)) {
-				const days = daysUntil(d, today);
+			if (isCountdown && isAfter(e, today)) {
+				const days = daysUntil(e, today);
 				if (days < countdownDays) {
 					countdownDays = days;
 					countdownLabel = summary.replace(/#countdown/gi, '').trim();
 				}
 			}
-			if (sameDay(d, today)) {
-				regularEvents.push({ summary, isAllDay: start.isDate, hour: start.hour, minute: start.minute });
+			if (sameDay(e, today)) {
+				regularEvents.push({ summary, isAllDay: e.isDate, hour: e.hour, minute: e.minute });
 			}
 		}
 	}
@@ -134,7 +151,7 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 	const uniqueEvents = regularEvents.filter(e => !seen.has(e.summary) && seen.add(e.summary));
 	uniqueEvents.sort((a, b) => sortKey(a) - sortKey(b));
 
-	console.error('[calendar] result:', JSON.stringify({ regularEvents, countdownDays, countdownLabel }));
+	console.error('[calendar] result:', JSON.stringify({ uniqueEvents, countdownDays, countdownLabel }));
 
 	return {
 		events: uniqueEvents.slice(0, 6).map(e => ({

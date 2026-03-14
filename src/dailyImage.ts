@@ -229,46 +229,22 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 															style: {
 																display: 'flex',
 																flexDirection: 'row',
-																alignItems: 'center',
+																alignItems: 'baseline',
 																marginBottom: 10,
 															},
 															children: [
-																{
+																...(time ? [{
 																	type: 'div',
 																	props: {
-																		style: {
-																			display: 'flex',
-																			width: 8,
-																			height: 8,
-																			borderRadius: 4,
-																			background: 'black',
-																			marginRight: 12,
-																			flexShrink: 0,
-																			marginTop: 2,
-																		},
-																		children: [],
+																		style: { fontSize: 18, color: '#555', marginRight: 8, flexShrink: 0 },
+																		children: time,
 																	},
-																},
+																}] : []),
 																{
 																	type: 'div',
 																	props: {
-																		style: { display: 'flex', flexDirection: 'column' },
-																		children: [
-																			{
-																				type: 'div',
-																				props: {
-																					style: { fontSize: 26, lineHeight: 1.3 },
-																					children: summary,
-																				},
-																			},
-																			...(time ? [{
-																				type: 'div',
-																				props: {
-																					style: { fontSize: 20, color: '#555', lineHeight: 1.2 },
-																					children: time,
-																				},
-																			}] : []),
-																		],
+																		style: { fontSize: 26, lineHeight: 1.3 },
+																		children: summary,
 																	},
 																},
 															],
@@ -413,9 +389,16 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 											type: 'div',
 											props: {
 												style: { fontSize: 28, lineHeight: 1.5 },
-												children: joke,
+												children: joke.setup,
 											},
 										},
+										...(joke.delivery ? [{
+											type: 'div',
+											props: {
+												style: { fontSize: 28, fontWeight: 700, lineHeight: 1.5, marginTop: 12 },
+												children: joke.delivery,
+											},
+										}] : []),
 									],
 								},
 							},
