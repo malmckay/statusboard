@@ -408,8 +408,8 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 											props: {
 												style: { display: 'flex', flexDirection: 'row', gap: 24 },
 												children: [
-													{ type: 'div', props: { style: { fontSize: 22, color: '#333' }, children: `Rise ${weather.sunrise}` } },
-													{ type: 'div', props: { style: { fontSize: 22, color: '#333' }, children: `Set ${weather.sunset}` } },
+													{ type: 'div', props: { style: { fontSize: 22, color: '#333' }, children: `Sunrise ${weather.sunrise}` } },
+													{ type: 'div', props: { style: { fontSize: 22, color: '#333' }, children: `Sunset ${weather.sunset}` } },
 												],
 											},
 										},
