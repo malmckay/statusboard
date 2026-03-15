@@ -33,9 +33,10 @@ function nthSunday(year: number, month: number, n: number): Date {
 }
 
 // Returns the Eastern UTC offset in ms for a given UTC timestamp.
+// Exported so dailyImage.ts can use the same DST-aware logic.
 // EDT (UTC-4) from second Sunday of March 07:00 UTC to first Sunday of November 06:00 UTC.
 // EST (UTC-5) otherwise.
-function easternOffsetMs(utc: Date): number {
+export function easternOffsetMs(utc: Date): number {
 	const y = utc.getUTCFullYear();
 	const dstStart = nthSunday(y, 2, 2);  // 2nd Sunday of March
 	dstStart.setUTCHours(7);              // 2am EST = 07:00 UTC

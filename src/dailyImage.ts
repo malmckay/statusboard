@@ -7,7 +7,7 @@ import interBold from './fonts/Inter-Bold.ttf';
 import weatherIconsFont from './fonts/weathericons-regular-webfont.ttf';
 import { fetchWeather, type ConditionCode } from './weather';
 import { fetchJoke } from './joke';
-import { fetchCalendar } from './calendar';
+import { fetchCalendar, easternOffsetMs } from './calendar';
 import { getClothingTip } from './clothingRules';
 
 // ── Dimensions ────────────────────────────────────────────────────────────────
@@ -100,8 +100,8 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 	// ── Date string for top-left ──────────────────────────────────────────────
 	const kDay   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 	const kMonth = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-	// Use Eastern time (UTC-5 proxy, good enough for date display)
-	const nowEastern = new Date(now.getTime() - 5 * 3600 * 1000);
+	// Use DST-aware Eastern time for date display
+	const nowEastern = new Date(now.getTime() - easternOffsetMs(now));
 	const dayName   = kDay[nowEastern.getUTCDay()];
 	const monthName = kMonth[nowEastern.getUTCMonth()];
 	const monthNum  = nowEastern.getUTCMonth() + 1;
