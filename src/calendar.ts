@@ -118,7 +118,17 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 	const urls = [env.ICAL_URL, env.ICAL_URL_2].filter(Boolean);
 	const texts = await Promise.all(urls.map(fetchIcalText));
 	const comps = texts.map(t => new ICAL.Component(ICAL.parse(t)));
-	const today = todayEastern(now);
+	// After 6:30pm Eastern, show tomorrow's events instead of today's
+	const nowEastern = new Date(now.getTime() - easternOffsetMs(now));
+	const easternHour = nowEastern.getUTCHours();
+	const easternMinute = nowEastern.getUTCMinutes();
+	const showTomorrow = easternHour > 18 || (easternHour === 18 && easternMinute >= 30);
+
+	let today = todayEastern(now);
+	if (showTomorrow) {
+		const d = new Date(Date.UTC(today.year, today.month - 1, today.day + 1));
+		today = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+	}
 
 	const regularEvents: EventEntry[] = [];
 	let countdownDays = Infinity;

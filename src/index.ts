@@ -14,7 +14,10 @@ export default {
 
 			try {
 				const dateParam = url.searchParams.get('date');
-				const now = dateParam ? new Date(`${dateParam}T12:00:00Z`) : undefined;
+				// Accept "YYYY-MM-DD" (defaults to noon UTC) or full ISO "YYYY-MM-DDTHH:MM"
+				const now = dateParam
+					? (dateParam.includes('T') ? new Date(dateParam) : new Date(`${dateParam}T12:00:00Z`))
+					: undefined;
 				const png = await generateDailyImage(env, now);
 				const response = new Response(png, {
 					headers: {
