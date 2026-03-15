@@ -1,6 +1,6 @@
 FQBN   := "Inkplate_Boards:esp32:Inkplate5V2"
 PORT   := `ls /dev/cu.usbserial-* 2>/dev/null | head -1`
-SKETCH := "inkplate"
+SKETCH := justfile_directory() / "inkplate"
 
 # List available recipes
 default:
