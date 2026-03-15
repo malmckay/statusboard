@@ -352,15 +352,15 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 													{
 														type: 'div',
 														props: {
-															style: { display: 'flex', flexDirection: 'column', marginLeft: 20, justifyContent: 'center' },
+															style: { display: 'flex', flexDirection: 'column', marginLeft: 20, justifyContent: 'center', alignItems: 'flex-end' },
 															children: [
 																{
 																	type: 'div',
 																	props: {
 																		style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline' },
 																		children: [
-																			{ type: 'div', props: { style: { fontSize: 20, color: '#555', marginRight: 4 }, children: '↑' } },
-																			{ type: 'div', props: { style: { fontSize: 40, fontWeight: 700 }, children: `${weather.tempHighF}°` } },
+																			{ type: 'div', props: { style: { fontSize: 24, color: '#555', marginRight: 4 }, children: '↑' } },
+																			{ type: 'div', props: { style: { fontSize: 56, fontWeight: 700 }, children: `${weather.tempHighF}°` } },
 																		],
 																	},
 																},
@@ -370,7 +370,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 																		style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 2 },
 																		children: [
 																			{ type: 'div', props: { style: { fontSize: 20, color: '#555', marginRight: 4 }, children: '↓' } },
-																			{ type: 'div', props: { style: { fontSize: 28, color: '#333' }, children: `${weather.tempLowF}°` } },
+																			{ type: 'div', props: { style: { fontSize: 40, color: '#333' }, children: `${weather.tempLowF}°` } },
 																		],
 																	},
 																},
