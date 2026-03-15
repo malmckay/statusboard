@@ -352,7 +352,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 													{
 														type: 'div',
 														props: {
-															style: { display: 'flex', flexDirection: 'column', marginLeft: 20, justifyContent: 'center', alignItems: 'flex-end' },
+															style: { display: 'flex', flexDirection: 'column', flex: 1, marginLeft: 20, justifyContent: 'center', alignItems: 'flex-end' },
 															children: [
 																{
 																	type: 'div',
