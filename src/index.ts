@@ -10,7 +10,7 @@ export default {
 			const cache = caches.default;
 			const cacheKey = new Request(`${url.origin}/daily-image`, { method: 'GET' });
 			const cached = url.searchParams.get('bust') !== '1' && await cache.match(cacheKey);
-			// if (cached) return cached;
+			if (cached) return cached;
 
 			try {
 				const dateParam = url.searchParams.get('date');
@@ -29,7 +29,7 @@ export default {
 			}
 		}
 
-		// Default route: show D1 data
+		// Default route: show Hi
 		return new Response(renderHtml('Hi!'), {
 			headers: { 'content-type': 'text/html' },
 		});

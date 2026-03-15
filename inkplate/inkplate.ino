@@ -35,7 +35,7 @@ const int TIME_AREA_MX = 640;  // x where the clock half begins (right half is b
 // 4 hours in milliseconds
 #define IMAGE_REFRESH_INTERVAL_MS ((uint32_t)4 * 60 * 60 * 1000)
 // 1 minute in milliseconds
-#define CLOCK_REFRESH_INTERVAL_MS ((uint32_t)60 * 1000)
+#define CLOCK_REFRESH_INTERVAL_MS ((uint32_t)15 * 1000)
 
 Inkplate inkplate(INKPLATE_1BIT);
 Network  network;
