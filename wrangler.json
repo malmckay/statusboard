@@ -21,6 +21,7 @@
 	"vars": {
 		"WEATHER_API_KEY": "2aad8e905e3d461dbe755432262302",
 		"WEATHER_CITY": "Portland,ME",
-		"ICAL_URL": "https://calendar.google.com/calendar/ical/aoife.c.mckay%40gmail.com/private-a0831dc87d305ce3ac598d00942e9cb3/basic.ics"
+		"ICAL_URL": "https://calendar.google.com/calendar/ical/aoife.c.mckay%40gmail.com/private-a0831dc87d305ce3ac598d00942e9cb3/basic.ics",
+		"ICAL_URL_2": "https://calendar.google.com/calendar/ical/ug419nhms59eimvdvmk7pqnpjo%40group.calendar.google.com/private-932ae6f94d602b89b65865f8d81eae4d/basic.ics"
 	}
 }

@@ -102,28 +102,35 @@ function sortKey(e: EventEntry): number {
 	return e.isAllDay ? -1 : e.hour * 60 + e.minute;
 }
 
+function setCountdown(days: number, label: string, cur: number): { days: number; label: string } | null {
+	if (days < cur) return { days, label: label.replace(/#countdown/gi, '').trim() };
+	return null;
+}
+
+async function fetchIcalText(url: string): Promise<string> {
+	const res = await fetch(url);
+	if (!res.ok) throw new Error(`iCal fetch HTTP ${res.status} for ${url}`);
+	return res.text();
+}
+
 export async function fetchCalendar(env: Env, now = new Date()): Promise<CalendarData> {
-	const res = await fetch(env.ICAL_URL);
-	if (!res.ok) throw new Error(`iCal fetch HTTP ${res.status}`);
-	const text = await res.text();
-
-	const comp = new ICAL.Component(ICAL.parse(text));
+	const urls = [env.ICAL_URL, env.ICAL_URL_2].filter(Boolean);
+	const texts = await Promise.all(urls.map(fetchIcalText));
+	const comps = texts.map(t => new ICAL.Component(ICAL.parse(t)));
 	const today = todayEastern(now);
-
-	// console.error('[calendar] today =', JSON.stringify(today));
 
 	const regularEvents: EventEntry[] = [];
 	let countdownDays = Infinity;
 	let countdownLabel = '';
 
-	for (const vevent of comp.getAllSubcomponents('vevent')) {
+	const vevents = comps.flatMap(c => c.getAllSubcomponents('vevent'));
+	for (const vevent of vevents) {
 		const event = new ICAL.Event(vevent);
 		const summary: string = event.summary ?? '';
 		const description: string = event.description ?? '';
 		const isCountdown = description.toLowerCase().includes(COUNTDOWN_TAG.toLowerCase());
 
 		if (event.isRecurring()) {
-			// Iterate from DTSTART; break once we pass today.
 			const iter = event.iterator();
 			let next: ICAL.Time | null;
 			let limit = MAX_ITER;
@@ -134,7 +141,7 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 				if (isAfter(e, today)) {
 					if (isCountdown) {
 						const days = daysUntil(e, today);
-						if (days > 0 && days < countdownDays) {
+						if (days < countdownDays) {
 							countdownDays = days;
 							countdownLabel = summary.replace(/#countdown/gi, '').trim();
 						}
@@ -143,20 +150,27 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 				}
 
 				if (sameDay(e, today)) {
-					// console.error('[calendar] recurring match:', summary, JSON.stringify(e));
 					regularEvents.push({ summary, isAllDay: e.isDate, hour: e.hour, minute: e.minute });
+					if (isCountdown && 0 < countdownDays) {
+						countdownDays = 0;
+						countdownLabel = summary.replace(/#countdown/gi, '').trim();
+					}
 					break;
 				}
 			}
 		} else {
 			const e = toEastern(event.startDate);
-			// console.error('[calendar] single event:', summary, JSON.stringify(e));
 
-			if (isCountdown && isAfter(e, today)) {
-				const days = daysUntil(e, today);
-				if (days < countdownDays) {
-					countdownDays = days;
+			if (isCountdown) {
+				if (sameDay(e, today) && 0 < countdownDays) {
+					countdownDays = 0;
 					countdownLabel = summary.replace(/#countdown/gi, '').trim();
+				} else if (isAfter(e, today)) {
+					const days = daysUntil(e, today);
+					if (days < countdownDays) {
+						countdownDays = days;
+						countdownLabel = summary.replace(/#countdown/gi, '').trim();
+					}
 				}
 			}
 			if (sameDay(e, today)) {
@@ -168,8 +182,6 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 	const seen = new Set<string>();
 	const uniqueEvents = regularEvents.filter(e => !seen.has(e.summary) && seen.add(e.summary));
 	uniqueEvents.sort((a, b) => sortKey(a) - sortKey(b));
-
-	// console.error('[calendar] result:', JSON.stringify({ uniqueEvents, countdownDays, countdownLabel }));
 
 	return {
 		events: uniqueEvents.slice(0, 6).map(e => ({
