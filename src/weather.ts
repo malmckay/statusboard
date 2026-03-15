@@ -7,6 +7,8 @@ export interface WeatherData {
 	tempLowF: number;
 	city: string;
 	isForTomorrow: boolean;
+	sunrise: string;  // e.g. "6:32am"
+	sunset: string;   // e.g. "7:55pm"
 }
 
 // Map WeatherAPI condition codes to our simplified set.
@@ -35,7 +37,9 @@ export async function fetchWeather(apiKey: string, city: string): Promise<Weathe
 	const localHour = new Date(nowUtc - 5 * 3600 * 1000).getUTCHours();
 	const dayIdx = localHour >= 16 ? 1 : 0;
 
-	const day = data.forecast.forecastday[dayIdx].day;
+	const forecastDay = data.forecast.forecastday[dayIdx];
+	const day = forecastDay.day;
+	const astro = forecastDay.astro;
 	return {
 		condition: day.condition.text as string,
 		conditionCode: toConditionCode(day.condition.code as number),
@@ -43,5 +47,16 @@ export async function fetchWeather(apiKey: string, city: string): Promise<Weathe
 		tempLowF: Math.round(day.mintemp_f as number),
 		city,
 		isForTomorrow: dayIdx === 1,
+		sunrise: formatAstroTime(astro.sunrise as string),
+		sunset: formatAstroTime(astro.sunset as string),
 	};
+}
+
+// Convert WeatherAPI astro time ("06:32 AM") to compact form ("6:32am")
+function formatAstroTime(t: string): string {
+	const m = t.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+	if (!m) return t;
+	const h = parseInt(m[1], 10);
+	const suffix = m[3].toLowerCase();
+	return `${h}:${m[2]}${suffix}`;
 }

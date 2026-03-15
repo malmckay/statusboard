@@ -385,10 +385,21 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 										{
 											type: 'div',
 											props: {
-												style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' },
+												style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 16, flexWrap: 'wrap', marginBottom: 10 },
 												children: [
 													{ type: 'div', props: { style: { fontSize: 28, fontWeight: 700 }, children: weather.condition } },
 													{ type: 'div', props: { style: { fontSize: 22 }, children: clothingTip } },
+												],
+											},
+										},
+										// Sunrise / sunset row
+										{
+											type: 'div',
+											props: {
+												style: { display: 'flex', flexDirection: 'row', gap: 24 },
+												children: [
+													{ type: 'div', props: { style: { fontSize: 22, color: '#333' }, children: `Rise ${weather.sunrise}` } },
+													{ type: 'div', props: { style: { fontSize: 22, color: '#333' }, children: `Set ${weather.sunset}` } },
 												],
 											},
 										},
