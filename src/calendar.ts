@@ -9,7 +9,8 @@ export interface CalendarEvent {
 }
 
 export interface CalendarData {
-	events: CalendarEvent[];  // today's events, max 6 — all-day first, then by start time
+	events: CalendarEvent[];  // today's (or tomorrow's) events, max 6 — all-day first, then by start time
+	isForTomorrow: boolean;
 	countdown: { label: string; days: number } | null;
 }
 
@@ -199,6 +200,7 @@ export async function fetchCalendar(env: Env, now = new Date()): Promise<Calenda
 			summary: e.summary,
 			time: e.isAllDay ? undefined : formatTime(e.hour, e.minute),
 		})),
+		isForTomorrow: showTomorrow,
 		countdown: countdownDays < Infinity ? { label: countdownLabel, days: countdownDays } : null,
 	};
 }

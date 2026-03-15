@@ -235,7 +235,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 														type: 'div',
 														props: {
 															style: { fontSize: 22, fontWeight: 700, letterSpacing: 3, marginBottom: 14 },
-															children: 'TODAY',
+															children: calendar.isForTomorrow ? 'TOMORROW' : 'TODAY',
 														},
 													},
 													// Event list
