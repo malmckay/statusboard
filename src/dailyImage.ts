@@ -147,7 +147,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 										{
 											type: 'div',
 											props: {
-												style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+												style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 14 },
 												children: [
 													{
 														type: 'div',
@@ -336,7 +336,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 												children: weather.isForTomorrow ? 'TOMORROW' : 'TODAY',
 											},
 										},
-										// Icon + condition row
+										// Icon + temps row
 										{
 											type: 'div',
 											props: {
@@ -344,25 +344,48 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 													display: 'flex',
 													flexDirection: 'row',
 													alignItems: 'center',
-													marginBottom: 14,
+													marginBottom: 10,
 												},
 												children: [
 													weatherIcon(weather.conditionCode),
+													// Temps stacked to the right of the icon
 													{
 														type: 'div',
 														props: {
-															style: { fontSize: 32, fontWeight: 700, marginLeft: 16 },
-															children: weather.condition,
+															style: { display: 'flex', flexDirection: 'column', marginLeft: 20, justifyContent: 'center' },
+															children: [
+																{
+																	type: 'div',
+																	props: {
+																		style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline' },
+																		children: [
+																			{ type: 'div', props: { style: { fontSize: 20, color: '#555', marginRight: 4 }, children: '↑' } },
+																			{ type: 'div', props: { style: { fontSize: 40, fontWeight: 700 }, children: `${weather.tempHighF}°` } },
+																		],
+																	},
+																},
+																{
+																	type: 'div',
+																	props: {
+																		style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 2 },
+																		children: [
+																			{ type: 'div', props: { style: { fontSize: 20, color: '#555', marginRight: 4 }, children: '↓' } },
+																			{ type: 'div', props: { style: { fontSize: 28, color: '#333' }, children: `${weather.tempLowF}°` } },
+																		],
+																	},
+																},
+															],
 														},
 													},
 												],
 											},
 										},
+										// Condition name under icon
 										{
 											type: 'div',
 											props: {
-												style: { fontSize: 28, marginBottom: 10 },
-												children: `High ${weather.tempHighF}°F · Low ${weather.tempLowF}°F`,
+												style: { fontSize: 28, fontWeight: 700, marginBottom: 10 },
+												children: weather.condition,
 											},
 										},
 										{
