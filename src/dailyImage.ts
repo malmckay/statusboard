@@ -392,6 +392,16 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 												],
 											},
 										},
+										// Yesterday comparison
+										...(weather.tempDiffF !== null ? [{
+											type: 'div',
+											props: {
+												style: { fontSize: 20, color: '#555', marginBottom: 8 },
+												children: weather.tempDiffF === 0
+													? 'Same as yesterday'
+													: `${Math.abs(weather.tempDiffF)}° ${weather.tempDiffF > 0 ? 'warmer' : 'colder'} than yesterday`,
+											},
+										}] : []),
 										// Sunrise / sunset row
 										{
 											type: 'div',

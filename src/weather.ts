@@ -9,6 +9,7 @@ export interface WeatherData {
 	isForTomorrow: boolean;
 	sunrise: string;  // e.g. "6:32am"
 	sunset: string;   // e.g. "7:55pm"
+	tempDiffF: number | null;  // today's high minus yesterday's high (null if unavailable)
 }
 
 // Map WeatherAPI condition codes to our simplified set.
@@ -26,11 +27,17 @@ function toConditionCode(code: number): ConditionCode {
 
 export async function fetchWeather(apiKey: string, city: string): Promise<WeatherData> {
 	// Fetch 2-day forecast so we can switch to "tomorrow" after 4 PM Eastern
-	const url = `http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city)}&days=2`;
-	const res = await fetch(url);
-	if (!res.ok) throw new Error(`WeatherAPI HTTP ${res.status}`);
+	const forecastUrl = `http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city)}&days=2`;
 
-	const data = (await res.json()) as any;
+	// Yesterday's date in YYYY-MM-DD (UTC, close enough for a rough comparison)
+	const yesterday = new Date(Date.now() - 86_400_000);
+	const ymd = yesterday.toISOString().slice(0, 10);
+	const historyUrl = `http://api.weatherapi.com/v1/history.json?key=${apiKey}&q=${encodeURIComponent(city)}&dt=${ymd}`;
+
+	const [forecastRes, historyRes] = await Promise.all([fetch(forecastUrl), fetch(historyUrl)]);
+	if (!forecastRes.ok) throw new Error(`WeatherAPI forecast HTTP ${forecastRes.status}`);
+
+	const data = (await forecastRes.json()) as any;
 
 	// Use UTC-5 (EST) as a reasonable proxy for Portland ME; close enough for today/tomorrow switching
 	const nowUtc = Date.now();
@@ -40,15 +47,25 @@ export async function fetchWeather(apiKey: string, city: string): Promise<Weathe
 	const forecastDay = data.forecast.forecastday[dayIdx];
 	const day = forecastDay.day;
 	const astro = forecastDay.astro;
+	const todayHighF = Math.round(day.maxtemp_f as number);
+
+	let tempDiffF: number | null = null;
+	if (historyRes.ok) {
+		const histData = (await historyRes.json()) as any;
+		const yesterdayHighF = Math.round(histData.forecast.forecastday[0].day.maxtemp_f as number);
+		tempDiffF = todayHighF - yesterdayHighF;
+	}
+
 	return {
 		condition: day.condition.text as string,
 		conditionCode: toConditionCode(day.condition.code as number),
-		tempHighF: Math.round(day.maxtemp_f as number),
+		tempHighF: todayHighF,
 		tempLowF: Math.round(day.mintemp_f as number),
 		city,
 		isForTomorrow: dayIdx === 1,
 		sunrise: formatAstroTime(astro.sunrise as string),
 		sunset: formatAstroTime(astro.sunset as string),
+		tempDiffF,
 	};
 }
 
