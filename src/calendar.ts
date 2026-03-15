@@ -21,22 +21,40 @@ const COUNTDOWN_TAG = '#countdown';
 // 2000 covers ~5.5 years of daily events or ~38 years of weekly events.
 const MAX_ITER = 2000;
 
-// Eastern UTC offset in ms (UTC-5 proxy — close enough for date/time display).
-const EASTERN_OFFSET_MS = 5 * 3600 * 1000;
-
 type YMD = { year: number; month: number; day: number };
 type Eastern = YMD & { hour: number; minute: number; isDate: boolean };
 
+// Returns the Nth Sunday of a given month (0-based month) as a UTC Date.
+function nthSunday(year: number, month: number, n: number): Date {
+	const firstOfMonth = new Date(Date.UTC(year, month, 1));
+	const dow = firstOfMonth.getUTCDay(); // 0 = Sunday
+	const firstSunday = dow === 0 ? 1 : 8 - dow;
+	return new Date(Date.UTC(year, month, firstSunday + (n - 1) * 7));
+}
+
+// Returns the Eastern UTC offset in ms for a given UTC timestamp.
+// EDT (UTC-4) from second Sunday of March 07:00 UTC to first Sunday of November 06:00 UTC.
+// EST (UTC-5) otherwise.
+function easternOffsetMs(utc: Date): number {
+	const y = utc.getUTCFullYear();
+	const dstStart = nthSunday(y, 2, 2);  // 2nd Sunday of March
+	dstStart.setUTCHours(7);              // 2am EST = 07:00 UTC
+	const dstEnd = nthSunday(y, 10, 1);   // 1st Sunday of November
+	dstEnd.setUTCHours(6);               // 2am EDT = 06:00 UTC
+	return utc >= dstStart && utc < dstEnd ? 4 * 3600_000 : 5 * 3600_000;
+}
+
 // Convert an ICAL.Time to Eastern-local components.
 //   • All-day (isDate=true)          → date components as-is, hour/minute = 0
-//   • UTC-stamped (DTSTART:...Z)     → subtract Eastern offset via toJSDate()
+//   • UTC-stamped (DTSTART:...Z)     → convert to Eastern via DST-aware offset
 //   • TZID-local (DTSTART;TZID=...)  → ical.js already stores local time in .year/.month/.day/.hour/.minute
 function toEastern(t: ICAL.Time): Eastern {
 	if (t.isDate) {
 		return { year: t.year, month: t.month, day: t.day, hour: 0, minute: 0, isDate: true };
 	}
 	if (t.zone?.tzid === 'UTC') {
-		const d = new Date(t.toJSDate().getTime() - EASTERN_OFFSET_MS);
+		const utc = t.toJSDate();
+		const d = new Date(utc.getTime() - easternOffsetMs(utc));
 		return {
 			year: d.getUTCFullYear(),
 			month: d.getUTCMonth() + 1,
@@ -50,9 +68,9 @@ function toEastern(t: ICAL.Time): Eastern {
 	return { year: t.year, month: t.month, day: t.day, hour: t.hour, minute: t.minute, isDate: false };
 }
 
-// Returns today's date in Eastern time (UTC-5 proxy).
+// Returns today's date in Eastern time.
 function todayEastern(now: Date): YMD {
-	const d = new Date(now.getTime() - EASTERN_OFFSET_MS);
+	const d = new Date(now.getTime() - easternOffsetMs(now));
 	return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
 }
 

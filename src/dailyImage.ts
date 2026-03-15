@@ -104,6 +104,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 	const nowEastern = new Date(now.getTime() - 5 * 3600 * 1000);
 	const dayName   = kDay[nowEastern.getUTCDay()];
 	const monthName = kMonth[nowEastern.getUTCMonth()];
+	const monthNum  = nowEastern.getUTCMonth() + 1;
 	const dayNum    = nowEastern.getUTCDate();
 
 	// ── Node tree ─────────────────────────────────────────────────────────────
@@ -146,8 +147,23 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 										{
 											type: 'div',
 											props: {
-												style: { fontSize: 36, fontWeight: 700, letterSpacing: 6, color: '#555' },
-												children: dayName,
+												style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 16 },
+												children: [
+													{
+														type: 'div',
+														props: {
+															style: { fontSize: 36, fontWeight: 700, color: '#555' },
+															children: `${monthNum}/${dayNum}`,
+														},
+													},
+													{
+														type: 'div',
+														props: {
+															style: { fontSize: 36, fontWeight: 700, letterSpacing: 6, color: '#555' },
+															children: dayName,
+														},
+													},
+												],
 											},
 										},
 										{

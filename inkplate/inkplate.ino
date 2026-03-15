@@ -112,25 +112,41 @@ void drawTimeOverlay()
     struct tm t;
     gmtime_r(&now, &t);
 
-    // ── Large time string, centred in the right half ───────────────────────
+    // ── Time: large h:mm + half-size AM/PM top-aligned to the right ──────────
     int hour12 = t.tm_hour % 12;
     if (hour12 == 0) hour12 = 12;
     const char *ampm = (t.tm_hour < 12) ? "AM" : "PM";
-    char timeStr[16];
-    sprintf(timeStr, "%d:%02d %s", hour12, t.tm_min, ampm);
+    char timeStr[8];
+    sprintf(timeStr, "%d:%02d", hour12, t.tm_min);
 
-    int16_t bx, by;
-    uint16_t bw, bh;
+    int16_t bx1, by1, bx2, by2;
+    uint16_t bw1, bh1, bw2, bh2;
+
     inkplate.setFont(nullptr);
-    inkplate.setTextSize(16);
     inkplate.setTextColor(BLACK, WHITE);
-    inkplate.getTextBounds(timeStr, 0, 0, &bx, &by, &bw, &bh);
-    // Centre horizontally in the right half, vertically in the strip
-    inkplate.setCursor(
-        TIME_AREA_MX + (clockW - (int)bw) / 2 - bx,
-        (TIME_AREA_H - (int)bh) / 2 - by
-    );
+
+    inkplate.setTextSize(16);
+    inkplate.getTextBounds(timeStr, 0, 0, &bx1, &by1, &bw1, &bh1);
+
+    inkplate.setTextSize(8);
+    inkplate.getTextBounds(ampm, 0, 0, &bx2, &by2, &bw2, &bh2);
+
+    const int ampmGap = 4;
+    int totalW = (int)bw1 + ampmGap + (int)bw2;
+
+    // Top-left of the time bounding box, centred in the clock area
+    int startX = TIME_AREA_MX + (clockW - totalW) / 2;
+    int topY   = (TIME_AREA_H - (int)bh1) / 2;
+
+    // Draw large h:mm
+    inkplate.setTextSize(16);
+    inkplate.setCursor(startX - bx1, topY - by1);
     inkplate.print(timeStr);
+
+    // Draw AM/PM at half size, top-aligned with the time string
+    inkplate.setTextSize(8);
+    inkplate.setCursor(startX + (int)bw1 + ampmGap - bx2, topY - by2);
+    inkplate.print(ampm);
 }
 
 // Fetches the background PNG from the worker and loads it into the frame buffer.

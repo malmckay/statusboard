@@ -1,5 +1,5 @@
 FQBN   := "Inkplate_Boards:esp32:Inkplate5V2"
-PORT   := "/dev/cu.usbserial-2144340"
+PORT   := `ls /dev/cu.usbserial-* 2>/dev/null | head -1`
 SKETCH := "inkplate"
 
 # List available recipes
@@ -10,7 +10,7 @@ default:
 
 # Seed local D1 and start dev server
 dev:
-    pnpm dev
+    npm run dev
 
 # Apply remote migrations and deploy worker
 deploy:
