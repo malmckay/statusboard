@@ -323,7 +323,6 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 										display: 'flex',
 										flexDirection: 'column',
 										justifyContent: 'flex-start',
-										alignItems: 'flex-start',
 										width: WEATHER_W,
 										padding: '24px 32px',
 										boxSizing: 'border-box',
@@ -344,6 +343,8 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 													display: 'flex',
 													flexDirection: 'row',
 													alignItems: 'center',
+													justifyContent: 'space-between',
+													width: '100%',
 													marginBottom: 10,
 												},
 												children: [
@@ -352,7 +353,7 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 													{
 														type: 'div',
 														props: {
-															style: { display: 'flex', flexDirection: 'column', flex: 1, marginLeft: 20, justifyContent: 'center', alignItems: 'flex-end' },
+															style: { display: 'flex', flexDirection: 'column', marginLeft: 20, justifyContent: 'center', alignItems: 'flex-end' },
 															children: [
 																{
 																	type: 'div',
