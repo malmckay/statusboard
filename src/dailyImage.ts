@@ -360,8 +360,8 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 																	props: {
 																		style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline' },
 																		children: [
-																			{ type: 'div', props: { style: { fontSize: 24, color: '#555', marginRight: 4 }, children: '↑' } },
 																			{ type: 'div', props: { style: { fontSize: 56, fontWeight: 700 }, children: `${weather.tempHighF}°` } },
+																			{ type: 'div', props: { style: { fontSize: 24, color: '#555', marginLeft: 6 }, children: '↑' } },
 																		],
 																	},
 																},
@@ -370,8 +370,8 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 																	props: {
 																		style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 2 },
 																		children: [
-																			{ type: 'div', props: { style: { fontSize: 20, color: '#555', marginRight: 4 }, children: '↓' } },
 																			{ type: 'div', props: { style: { fontSize: 40, color: '#333' }, children: `${weather.tempLowF}°` } },
+																			{ type: 'div', props: { style: { fontSize: 20, color: '#555', marginLeft: 6 }, children: '↓' } },
 																		],
 																	},
 																},
@@ -381,30 +381,15 @@ export async function generateDailyImage(env: Env, now = new Date()): Promise<Ui
 												],
 											},
 										},
-										// Condition name under icon
+										// Condition + advice row
 										{
 											type: 'div',
 											props: {
-												style: { fontSize: 28, fontWeight: 700, marginBottom: 10 },
-												children: weather.condition,
-											},
-										},
-										{
-											type: 'div',
-											props: {
-												style: {
-													fontSize: 24,
-													fontWeight: 700,
-													marginBottom: 8,
-												},
-												children: clothingTip,
-											},
-										},
-										{
-											type: 'div',
-											props: {
-												style: { fontSize: 18, color: '#555' },
-												children: weather.city,
+												style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' },
+												children: [
+													{ type: 'div', props: { style: { fontSize: 28, fontWeight: 700 }, children: weather.condition } },
+													{ type: 'div', props: { style: { fontSize: 22 }, children: clothingTip } },
+												],
 											},
 										},
 									],
